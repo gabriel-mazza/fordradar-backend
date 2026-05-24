@@ -1,0 +1,45 @@
+server:
+  port: 8081
+
+spring:
+  application:
+    name: ford-radar
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:oracle:thin:@oracle.fiap.com.br:1521:ORCL}
+    username: ${SPRING_DATASOURCE_USERNAME:RM}
+    password: ${SPRING_DATASOURCE_PASSWORD:SUASENHA}
+    driver-class-name: oracle.jdbc.OracleDriver
+    hikari:
+      connection-test-query: SELECT 1 FROM DUAL
+      maximum-pool-size: 2
+      minimum-idle: 1
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.OracleDialect
+        format_sql: true
+    show-sql: true
+  flyway:
+    enabled: true
+    default-schema: ${SPRING_FLYWAY_DEFAULT_SCHEMA:RM555410}
+    schemas: ${SPRING_FLYWAY_SCHEMAS:RM555410}
+    baseline-on-migrate: true
+    baseline-version: 0
+
+jwt:
+  secret: Y2hhdmUtbXVpdG8tc2VjcmV0YS1wYXJhLWFzc2luYXR1cmEtZG8tamF2YS13ZWItdG9rZW4=
+  expiration: 86400000
+
+llm:
+  provider: GEMINI
+  api-key: SUA_API_KEY_AQUI
+  url: https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent
+
+logging:
+  level:
+    root: INFO
+    br.com.fiap: DEBUG
+    org.hibernate.SQL: DEBUG
+    org.hibernate.type.descriptor.sql: TRACE
