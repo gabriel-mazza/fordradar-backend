@@ -1,5 +1,9 @@
 # Ford Radar API
 
+Gabriel Barros Mazzariol RM 555410
+Jefferson Junior Alvarez Urbina RM 558497
+ 
+
 API back-end do projeto **Ford Radar**, desenvolvida em Spring Boot para atender dois objetivos principais:
 
 1. **Inteligência competitiva com IA**: receber dados de veículos concorrentes, consultar a IA quando necessário e devolver uma ficha técnica padronizada.
