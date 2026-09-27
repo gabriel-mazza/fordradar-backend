@@ -1,26 +1,31 @@
 server:
-  port: 8081
+  port: ${PORT:8081}
+  forward-headers-strategy: ${SERVER_FORWARD_HEADERS:none}
+  error:
+    include-stacktrace: never
+    include-message: never
+    include-binding-errors: never
 
 spring:
   application:
     name: ford-radar
   datasource:
     url: ${SPRING_DATASOURCE_URL:jdbc:oracle:thin:@oracle.fiap.com.br:1521:ORCL}
-    username: ${SPRING_DATASOURCE_USERNAME:RM}
-    password: ${SPRING_DATASOURCE_PASSWORD:SUASENHA}
+    username: ${SPRING_DATASOURCE_USERNAME}
+    password: ${SPRING_DATASOURCE_PASSWORD}
     driver-class-name: oracle.jdbc.OracleDriver
     hikari:
       connection-test-query: SELECT 1 FROM DUAL
       maximum-pool-size: 2
       minimum-idle: 1
   jpa:
+    open-in-view: false
     hibernate:
       ddl-auto: validate
     properties:
       hibernate:
         dialect: org.hibernate.dialect.OracleDialect
-        format_sql: true
-    show-sql: true
+    show-sql: false
   flyway:
     enabled: true
     default-schema: ${SPRING_FLYWAY_DEFAULT_SCHEMA:RM555410}
@@ -29,17 +34,34 @@ spring:
     baseline-version: 0
 
 jwt:
-  secret: Y2hhdmUtbXVpdG8tc2VjcmV0YS1wYXJhLWFzc2luYXR1cmEtZG8tamF2YS13ZWItdG9rZW4=
-  expiration: 86400000
+  secret: ${JWT_SECRET}
+  expiration: ${JWT_EXPIRATION_MS:3600000}
+  issuer: ford-radar-api
+
+security:
+  data-encryption-key: ${DATA_ENCRYPTION_KEY}
+  cors:
+    allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:8081}
+  rate-limit:
+    auth-per-minute: ${RATE_LIMIT_AUTH_PER_MINUTE:10}
+    global-per-minute: ${RATE_LIMIT_GLOBAL_PER_MINUTE:60}
+  admin-bootstrap:
+    email: ${ADMIN_EMAIL:}
+    password: ${ADMIN_PASSWORD:}
 
 llm:
   provider: GEMINI
-  api-key: SUA_API_KEY_AQUI
+  api-key: ${LLM_API_KEY}
   url: https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent
+
+springdoc:
+  api-docs:
+    enabled: ${SWAGGER_ENABLED:false}
+  swagger-ui:
+    enabled: ${SWAGGER_ENABLED:false}
 
 logging:
   level:
     root: INFO
-    br.com.fiap: DEBUG
-    org.hibernate.SQL: DEBUG
-    org.hibernate.type.descriptor.sql: TRACE
+    br.com.fiap: INFO
+    AUDIT: INFO

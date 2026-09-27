@@ -1,0 +1,7 @@
+.git
+.github
+.idea
+target
+.env
+*.md
+Ford-Radar.postman_collection.json
