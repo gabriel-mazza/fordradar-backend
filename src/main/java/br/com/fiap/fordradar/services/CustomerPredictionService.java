@@ -5,6 +5,7 @@ import br.com.fiap.fordradar.dtos.CustomerPredictionResponseDTO;
 import br.com.fiap.fordradar.exceptions.ResourceNotFoundException;
 import br.com.fiap.fordradar.models.CustomerPrediction;
 import br.com.fiap.fordradar.repositories.CustomerPredictionRepository;
+import br.com.fiap.fordradar.security.AuditLog;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -21,8 +22,8 @@ public class CustomerPredictionService {
 
     @Transactional
     public CustomerPredictionResponseDTO savePrediction(CustomerPredictionRequestDTO request) {
-        log.info("Processing prediction for VIN: {}", request.getVin());
-        
+        AuditLog.event("PREDICTION_UPSERT", "SUCCESS", "actor", AuditLog.currentActor(), "vin", AuditLog.maskVin(request.getVin()));
+
         CustomerPrediction entity = repository.findByVin(request.getVin())
                 .orElse(new CustomerPrediction());
 
@@ -38,7 +39,7 @@ public class CustomerPredictionService {
 
     @Transactional(readOnly = true)
     public CustomerPredictionResponseDTO findByVin(String vin) {
-        log.info("Fetching prediction for VIN: {}", vin);
+        AuditLog.event("PII_READ", "SUCCESS", "actor", AuditLog.currentActor(), "vin", AuditLog.maskVin(vin));
         CustomerPrediction entity = repository.findByVin(vin)
                 .orElseThrow(() -> new ResourceNotFoundException("No prediction found for VIN: " + vin));
         return mapToDTO(entity);
@@ -46,6 +47,7 @@ public class CustomerPredictionService {
 
     @Transactional(readOnly = true)
     public Page<CustomerPredictionResponseDTO> findAll(Pageable pageable) {
+        AuditLog.event("PII_LIST", "SUCCESS", "actor", AuditLog.currentActor(), "page", pageable.getPageNumber(), "size", pageable.getPageSize());
         return repository.findAll(pageable).map(this::mapToDTO);
     }
 

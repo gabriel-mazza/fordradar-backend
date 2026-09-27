@@ -1,6 +1,7 @@
 package br.com.fiap.fordradar.controllers;
 
 import br.com.fiap.fordradar.dtos.CustomerPredictionRequestDTO;
+import br.com.fiap.fordradar.exceptions.BusinessRuleException;
 import br.com.fiap.fordradar.dtos.CustomerPredictionResponseDTO;
 import br.com.fiap.fordradar.services.CustomerPredictionService;
 import jakarta.validation.Valid;
@@ -27,6 +28,9 @@ public class CustomerPredictionController {
 
     @GetMapping("/{vin}")
     public ResponseEntity<CustomerPredictionResponseDTO> getPredictionByVin(@PathVariable String vin) {
+        if (!vin.matches("^[A-HJ-NPR-Za-hj-npr-z0-9]{17}$")) {
+            throw new BusinessRuleException("Invalid VIN format");
+        }
         CustomerPredictionResponseDTO response = service.findByVin(vin);
         return ResponseEntity.ok(response);
     }
@@ -34,7 +38,9 @@ public class CustomerPredictionController {
     @GetMapping
     public ResponseEntity<Page<CustomerPredictionResponseDTO>> listPredictions(
             @PageableDefault(size = 10, sort = "retentionScore") Pageable pageable) {
-        Page<CustomerPredictionResponseDTO> response = service.findAll(pageable);
+        Pageable safe = org.springframework.data.domain.PageRequest.of(
+                Math.max(pageable.getPageNumber(), 0), Math.min(pageable.getPageSize(), 50), pageable.getSort());
+        Page<CustomerPredictionResponseDTO> response = service.findAll(safe);
         return ResponseEntity.ok(response);
     }
 }

@@ -1,5 +1,6 @@
 package br.com.fiap.fordradar.models;
 
+import br.com.fiap.fordradar.security.CryptoConverter;
 import jakarta.persistence.*;
 import lombok.*;
 import org.springframework.data.annotation.CreatedDate;
@@ -26,13 +27,16 @@ public class CustomerPrediction {
     @Column(nullable = false, unique = true, length = 17)
     private String vin;
 
-    @Column(name = "customer_name", length = 150)
+    @Convert(converter = CryptoConverter.class)
+    @Column(name = "customer_name", length = 600)
     private String customerName;
 
-    @Column(name = "customer_email", length = 100)
+    @Convert(converter = CryptoConverter.class)
+    @Column(name = "customer_email", length = 600)
     private String customerEmail;
 
-    @Column(length = 20)
+    @Convert(converter = CryptoConverter.class)
+    @Column(length = 600)
     private String phone;
 
     @Column(name = "retention_score", precision = 5, scale = 2)
