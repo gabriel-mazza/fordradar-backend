@@ -30,7 +30,7 @@ public class GeminiIntegrationService implements LlmIntegrationService {
                     .bodyValue(requestBody)
                     .retrieve()
                     .bodyToMono(GeminiResponse.class)
-                    .block(); // Blocking pois a controller não é Reativa (WebMVC) ainda
+                    .block();
 
             return extractTextFromResponse(response);
         } catch (Exception e) {
