@@ -1,4 +1,4 @@
-{
+  {
   "info": {
     "_postman_id": "7f2f6ad4-9e0a-4c1a-9d0c-ford-radar-collection",
     "name": "Ford Radar API",
@@ -38,7 +38,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"name\": \"Jefferson\",\n  \"email\": \"jefferson@email.com\",\n  \"password\": \"123456\",\n  \"role\": \"ADMIN\"\n}"
+              "raw": "{\n  \"name\": \"Jefferson\",\n  \"email\": \"jefferson@email.com\",\n  \"password\": \"Senha@12345\"\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/api/v1/auth/register",
@@ -69,7 +69,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"email\": \"jefferson@email.com\",\n  \"password\": \"123456\"\n}"
+              "raw": "{\n  \"email\": \"jefferson@email.com\",\n  \"password\": \"Senha@12345\"\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/api/v1/auth/login",

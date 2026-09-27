@@ -2,7 +2,7 @@
 
 Gabriel Barros Mazzariol RM 555410
 Jefferson Junior Alvarez Urbina RM 558497
- 
+
 
 API back-end do projeto **Ford Radar**, desenvolvida em Spring Boot para atender dois objetivos principais:
 
@@ -90,10 +90,11 @@ Authorization: Bearer SEU_TOKEN_AQUI
 - `POST /api/v1/auth/login`
 
 ### Rotas protegidas
-- `POST /api/v1/vehicles/compare`
-- `POST /api/v1/predictions`
-- `GET /api/v1/predictions/{vin}`
-- `GET /api/v1/predictions`
+- `POST /api/v1/vehicles/compare` — ANALISTA, ADMIN
+- `GET /api/v1/predictions/{vin}` — ANALISTA, ADMIN
+- `GET /api/v1/predictions` — ANALISTA, ADMIN
+- `POST /api/v1/predictions` — somente ADMIN (ingestão do pipeline de ML)
+- `PATCH /api/v1/admin/users/{id}/role` — somente ADMIN
 
 ---
 
@@ -107,8 +108,7 @@ Exemplo de corpo:
 {
   "name": "Jefferson",
   "email": "jefferson@email.com",
-  "password": "123456",
-  "role": "ADMIN"
+  "password": "Senha@12345"
 }
 ```
 
@@ -119,7 +119,7 @@ Exemplo de corpo:
 ```json
 {
   "email": "jefferson@email.com",
-  "password": "123456"
+  "password": "Senha@12345"
 }
 ```
 
@@ -243,14 +243,35 @@ http://localhost:8080/swagger-ui/index.html
 
 ## Configuração local
 
-A aplicação lê as configurações do arquivo `application.yml`.
+Copie `.env.example`, preencha os valores e exporte-os como variáveis de ambiente. **Não há segredos no repositório**: a aplicação não sobe sem `JWT_SECRET`, `DATA_ENCRYPTION_KEY`, `LLM_API_KEY` e as credenciais do banco.
 
-Os valores de banco e credenciais podem ser ajustados por ambiente.
-
-Exemplo de execução local:
-```powershell
+```
+openssl rand -base64 48   # JWT_SECRET
+openssl rand -base64 32   # DATA_ENCRYPTION_KEY (AES-256)
 mvn spring-boot:run
 ```
+
+O primeiro ADMIN é criado no startup a partir de `ADMIN_EMAIL` / `ADMIN_PASSWORD` (>= 12 caracteres). Depois, ele promove outros usuários via `PATCH /api/v1/admin/users/{id}/role`.
+
+Container: `docker build -t fordradar-api .` (imagem multi-stage, usuário não-root).
+
+---
+
+## Segurança (Sprint 3 - DevSecOps)
+
+| Controle | Implementação |
+|---|---|
+| Autenticação | JWT HS256 com `iss`, `jti`, expiração de 1h; segredo por variável de ambiente (>= 32 bytes) |
+| Senhas | BCrypt (custo 12) + política de senha forte no cadastro |
+| Controle de acesso (RBAC) | `ANALISTA` / `ADMIN` aplicado em `SecurityConfig` e `@PreAuthorize`; cadastro público não escolhe perfil |
+| Rate limit | 10 req/min por IP em `/auth/**`, 60 req/min nas demais rotas (HTTP 429 + `Retry-After`) |
+| Validação de entrada | Bean Validation nos DTOs, regex de VIN, tamanho máximo de página (50), atributos do prompt sanitizados |
+| Prompt injection / saída da IA | valores tratados como dados no prompt; resposta do LLM só é persistida se for JSON objeto |
+| Criptografia em repouso | AES-256-GCM (`CryptoConverter`) em nome, e-mail e telefone dos clientes |
+| Logs de auditoria | JSON estruturado, logger `AUDIT`, e-mail em hash e VIN mascarado (sem PII) |
+| Headers / erros | HSTS, X-Frame-Options, nosniff, Referrer-Policy; sem stack trace nas respostas; 401/403 padronizados |
+| Swagger | desabilitado por padrão (`SWAGGER_ENABLED=true` só em desenvolvimento) |
+| Pipeline CI | Gitleaks, Semgrep (SAST), Trivy (SCA, IaC e imagem), Dependabot — ver `.github/workflows/devsecops.yml` |
 
 ---
 
