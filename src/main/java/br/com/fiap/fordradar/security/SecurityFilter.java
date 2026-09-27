@@ -30,12 +30,14 @@ public class SecurityFilter extends OncePerRequestFilter {
                 String subjectEmail = tokenService.validateToken(token);
                 User user = userRepository.findByEmail(subjectEmail).orElse(null);
 
-                if (user != null) {
-                    UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(user, null, user.getAuthorities());
+                if (user != null && user.isEnabled()) {
+                    UsernamePasswordAuthenticationToken authentication =
+                            new UsernamePasswordAuthenticationToken(user, null, user.getAuthorities());
                     SecurityContextHolder.getContext().setAuthentication(authentication);
                 }
             } catch (Exception ex) {
                 SecurityContextHolder.clearContext();
+                AuditLog.event("TOKEN_REJECTED", "DENIED", "reason", ex.getClass().getSimpleName(), "path", request.getRequestURI());
             }
         }
 
@@ -47,7 +49,6 @@ public class SecurityFilter extends OncePerRequestFilter {
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
             return null;
         }
-        return authHeader.replace("Bearer ", "");
+        return authHeader.substring(7).trim();
     }
 }
-

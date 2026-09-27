@@ -5,12 +5,15 @@ import br.com.fiap.fordradar.dtos.LoginResponseDTO;
 import br.com.fiap.fordradar.dtos.RegisterRequestDTO;
 import br.com.fiap.fordradar.exceptions.BusinessRuleException;
 import br.com.fiap.fordradar.models.User;
+import br.com.fiap.fordradar.models.enums.Role;
 import br.com.fiap.fordradar.repositories.UserRepository;
+import br.com.fiap.fordradar.security.AuditLog;
 import br.com.fiap.fordradar.security.TokenService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -24,17 +27,26 @@ public class AuthService {
     private final PasswordEncoder passwordEncoder;
 
     public LoginResponseDTO login(LoginRequestDTO request) {
-        UsernamePasswordAuthenticationToken usernamePassword = new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword());
-        Authentication auth = this.authenticationManager.authenticate(usernamePassword);
+        try {
+            UsernamePasswordAuthenticationToken usernamePassword =
+                    new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword());
+            Authentication auth = this.authenticationManager.authenticate(usernamePassword);
 
-        String token = tokenService.generateToken((User) auth.getPrincipal());
-
-        return new LoginResponseDTO(token);
+            User user = (User) auth.getPrincipal();
+            String token = tokenService.generateToken(user);
+            AuditLog.event("LOGIN", "SUCCESS", "user", AuditLog.hash(user.getEmail()), "role", user.getRole().name());
+            return new LoginResponseDTO(token);
+        } catch (AuthenticationException ex) {
+            AuditLog.event("LOGIN", "FAILURE", "user", AuditLog.hash(request.getEmail()),
+                    "reason", ex.getClass().getSimpleName());
+            throw ex;
+        }
     }
 
     public void register(RegisterRequestDTO request) {
         if (this.repository.findByEmail(request.getEmail()).isPresent()) {
-            throw new BusinessRuleException("User with this email already exists.");
+            AuditLog.event("REGISTER", "FAILURE", "user", AuditLog.hash(request.getEmail()), "reason", "duplicate");
+            throw new BusinessRuleException("Não foi possível concluir o cadastro com os dados informados.");
         }
 
         String encryptedPassword = passwordEncoder.encode(request.getPassword());
@@ -42,10 +54,10 @@ public class AuthService {
                 .name(request.getName())
                 .email(request.getEmail())
                 .password(encryptedPassword)
-                .role(request.getRole())
+                .role(Role.ANALISTA)
                 .build();
 
         this.repository.save(newUser);
+        AuditLog.event("REGISTER", "SUCCESS", "user", AuditLog.hash(request.getEmail()), "role", Role.ANALISTA.name());
     }
 }
-
